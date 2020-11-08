@@ -1,1 +1,1 @@
-web : gunicorn secondbrain.wsgi
+web: gunicorn secondbrain.wsgi
