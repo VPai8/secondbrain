@@ -12,6 +12,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.db.models import Q
+from django.utils import timezone
 
 
 class Home(LoginRequiredMixin, ListView):
@@ -95,6 +96,20 @@ class NotesDeleteView(LoginRequiredMixin, SuccessMessageMixin, UserPassesTestMix
         return data_to_return
 
 
+@login_required
+def pin_note(request, id):
+    if request.method == 'POST':
+        note = get_object_or_404(Note, pk=id)
+        if note.user == request.user:
+            note.pin ^= 1
+            note.save()
+            return JsonResponse({})
+        else:
+            raise PermissionDenied
+    else:
+        raise Http404()
+
+
 class ToDoNotesCreateView(LoginRequiredMixin, CreateView):
     model = ToDoNote
     fields = ['title', 'color', 'pin']
@@ -140,6 +155,31 @@ class ToDoNotesDeleteView(LoginRequiredMixin, SuccessMessageMixin, UserPassesTes
         return data_to_return
 
 
+@login_required
+def pin_tdnote(request, id):
+    if request.method == 'POST':
+        note = get_object_or_404(ToDoNote, pk=id)
+        if note.user == request.user:
+            note.pin ^= 1
+            note.save()
+            return JsonResponse({})
+        else:
+            raise PermissionDenied
+    else:
+        raise Http404()
+
+
+@login_required
+def item_list(request, id):
+    tdnote = get_object_or_404(ToDoNote, pk=id)
+    if tdnote.user == request.user:
+        items = get_list_or_404(ToDo, note=tdnote)
+        response = serializers.serialize("json", items)
+        return HttpResponse(response, content_type='application/json')
+    else:
+        raise PermissionDenied
+
+
 class AjaxableResponseMixin(object):
     def form_valid(self, form):
         form.instance.note = ToDoNote.objects.get(pk=self.kwargs['pk'])
@@ -148,6 +188,9 @@ class AjaxableResponseMixin(object):
             data = {
                 'pk': self.object.pk,
             }
+            tdnote = self.object.note
+            tdnote.last_edit = timezone.now()
+            tdnote.save()
             return JsonResponse(data)
         else:
             return response
@@ -155,7 +198,6 @@ class AjaxableResponseMixin(object):
     def form_invalid(self, form):
         response = super(AjaxableResponseMixin, self).form_invalid(form)
         if self.request.is_ajax():
-            print('invalid loop')
             return JsonResponse(form.errors, status=400)
         else:
             return response
@@ -176,78 +218,48 @@ class ToDoCreateView(LoginRequiredMixin,  AjaxableResponseMixin, CreateView):
 
 
 @login_required
-def pin_note(request, id):
-    if request.method == 'POST':
-        note = get_object_or_404(Note, pk=id)
-        if note.user == request.user:
-            note.pin ^= 1
-            note.save()
-            return JsonResponse({})
-        else:
-            raise PermissionDenied
-    else:
-        raise Http404()
-
-
-@login_required
-def pin_tdnote(request, id):
-    if request.method == 'POST':
-        note = get_object_or_404(ToDoNote, pk=id)
-        if note.user == request.user:
-            note.pin ^= 1
-            note.save()
-            return JsonResponse({})
-        else:
-            raise PermissionDenied
-    else:
-        raise Http404()
-
-
-@login_required
-def item_check(request, id):
-    if request.method == 'POST':
-        item = get_object_or_404(ToDo, pk=id)
-        if item.note.user == request.user:
-            item.completed ^= 1
-            item.save()
-            return JsonResponse({})
-        else:
-            raise PermissionDenied
-    else:
-        raise Http404()
-
-
-@login_required
-def item_delete(request, id):
-    if request.method == 'POST':
-        item = get_object_or_404(ToDo, pk=id)
-        if item.note.user == request.user:
-            item.delete()
-            return JsonResponse({})
-        else:
-            raise PermissionDenied
-    else:
-        raise Http404()
-
-
-@login_required
-def item_list(request, id):
-    tdnote = get_object_or_404(ToDoNote, pk=id)
-    if tdnote.user == request.user:
-        items = get_list_or_404(ToDo, note=tdnote)
-        response = serializers.serialize("json", items)
-        return HttpResponse(response, content_type='application/json')
-    else:
-        raise PermissionDenied
-
-
-@login_required
-def item_update(request, id):
+def todo_update(request, id):
     if request.method == 'POST':
         todo = get_object_or_404(ToDo, pk=id)
         if todo.note.user == request.user:
             todo.item = request.POST['item']
             todo.save()
+            tdnote = todo.note
+            tdnote.last_edit = timezone.now()
+            tdnote.save()
+            return JsonResponse({})
+        else:
+            raise PermissionDenied
+    else:
+        raise Http404()
+
+
+@login_required
+def todo_delete(request, id):
+    if request.method == 'POST':
+        todo = get_object_or_404(ToDo, pk=id)
+        if todo.note.user == request.user:
+            tdnote = todo.note
+            tdnote.last_edit = timezone.now()
+            tdnote.save()
+            todo.delete()
+            return JsonResponse({})
+        else:
+            raise PermissionDenied
+    else:
+        raise Http404()
+
+
+@login_required
+def todo_check(request, id):
+    if request.method == 'POST':
+        todo = get_object_or_404(ToDo, pk=id)
+        if todo.note.user == request.user:
+            todo.completed ^= 1
+            todo.save()
+            tdnote = todo.note
+            tdnote.last_edit = timezone.now()
+            tdnote.save()
             return JsonResponse({})
         else:
             raise PermissionDenied

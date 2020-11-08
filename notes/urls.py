@@ -21,11 +21,11 @@ urlpatterns = [
     path('notes/td/<int:pk>/add-todo/',
          ToDoCreateView.as_view(), name='notes-todo'),
     path('notes/td/item/<int:id>/update',
-         item_update, name='notes-itemupdate'),
+         todo_update, name='notes-itemupdate'),
     path('notes/td/item/<int:id>/delete',
-         item_delete, name='notes-itemdelete'),
+         todo_delete, name='notes-itemdelete'),
     path('notes/td/item/<int:id>/check',
-         item_check, name='notes-itemcheck'),
+         todo_check, name='notes-itemcheck'),
 
     path('about/', about, name='notes-about'),
 ]

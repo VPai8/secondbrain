@@ -189,22 +189,3 @@
     })            
 </script>
 {% endblock %}
-
-
-<!-- 
-function deleteitem(element,todoitem){
-const csrf = document.getElementsByName('csrfmiddlewaretoken')
-$.ajax({
-type: 'POST',
-url: todoitem,
-data: {
-'csrfmiddlewaretoken': csrf[0].value,
-},
-success: function (response) {
-location.reload()
-},
-error: function (error) {
-console.log(error)
-}
-})
-} -->
