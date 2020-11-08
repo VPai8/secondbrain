@@ -1,0 +1,27 @@
+{% extends 'notes/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="mx-auto mt-5" style="width: 400px;">
+    <div class='container'>
+        <div class='content-section'>
+            <form method='POST'>
+                {% csrf_token %}
+                <fieldset class='form-group'>
+                    <legend class='border-bottom mb-4'>
+                        Edit your note!
+                    </legend>
+                    {{ form | crispy }}
+                </fieldset>
+                <div class='form-group'>
+                    <button class="btn btn-outline-info" type='submit'>
+                        Update
+                    </button>
+                    <a class="btn btn-outline-danger" href={% url 'tdnotes-delete' object.id %}>
+                        Delete
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
